@@ -6,6 +6,8 @@
 
 using namespace std;
 
+bool fact = false;
+
 void error(string s){
   throw runtime_error(s);
   cerr<<s;
@@ -58,6 +60,7 @@ Token Token_Stream::get(){
     case '\n':
     case 'q':
     case '*':
+    case '!':
     case '/': 
     case '+':
     case '-':
@@ -120,6 +123,7 @@ double expression(){
 
 double term(){
   double left = primary();
+  double a  = left;
   Token t  = ts.get();
   while(true){
     switch(t.kind){
@@ -127,10 +131,21 @@ double term(){
         left*=primary();
         t = ts.get();
         break;
+      case '!':
+        if (fact == true){
+          for(double i = 2 ; i<a ; ++i){
+            left *= i;
+          }
+          fact = false;
+        }
+        t = ts.get();
+        break;
+
       case '/':
         left/=primary();
         t = ts.get();
         break;
+
       default:
         ts.put_back(t);
         return left;
@@ -147,6 +162,7 @@ double primary(){
   while(true){
     switch(t.kind){
       case '0':
+        fact = true;
         return t.value;
         break;
 
