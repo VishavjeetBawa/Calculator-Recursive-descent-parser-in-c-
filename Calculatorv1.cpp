@@ -1,4 +1,4 @@
-//This is Advanced Calculator v1.0.0
+//This is the factorial implementation of Advanced Calculator v1.0.0
 //It will use parsing and grammar.
 
 #include <iostream>
@@ -60,7 +60,7 @@ Token Token_Stream::get(){
     case '\n':
     case 'q':
     case '*':
-    case '!':
+    case '!'://added  ! case.
     case '/': 
     case '+':
     case '-':
@@ -131,7 +131,7 @@ double term(){
         left*=primary();
         t = ts.get();
         break;
-      case '!':
+      case '!'://it is working mostly but right now I will have to move it to primary for it to work for test cases like 2*3! where 3! happens first. which makes it 2*6.
         if (fact == true){
           for(double i = 2 ; i<a ; ++i){
             left *= i;
