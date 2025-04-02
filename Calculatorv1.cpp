@@ -1,9 +1,9 @@
-//This is Advanced Calculator v1.0.0
+//This is Advanced Calculator v 1.0.1
 //It will use parsing and grammar.
 
 #include <iostream>
 #include <stdexcept>
-
+#include <cmath>
 using namespace std;
 
 void error(string s){
@@ -57,7 +57,10 @@ Token Token_Stream::get(){
 
     case '\n':
     case 'q':
+    case '!':
     case '*':
+    case '{':
+    case '}':
     case '/': 
     case '+':
     case '-':
@@ -127,10 +130,12 @@ double term(){
         left*=primary();
         t = ts.get();
         break;
+
       case '/':
         left/=primary();
         t = ts.get();
         break;
+
       default:
         ts.put_back(t);
         return left;
@@ -141,33 +146,45 @@ double term(){
 
 }
 
-double primary(){
-  double left = 0;
-  Token t = ts.get();
-  while(true){
-    switch(t.kind){
-      case '0':
-        return t.value;
-        break;
-
-      case '(':
-        left = expression();
-        t = ts.get();
-        if(t.kind!=')'){
-          error(":Expected ')' not found:");
+double primary() {
+    Token t = ts.get();
+    switch(t.kind) {
+        case '0': {  // Number token
+            double val = t.value;
+            // Check for factorial operator
+            Token next = ts.get();
+            if(next.kind == '!') {
+                // Validate and compute factorial
+                if(val < 0 || val != floor(val)) {
+                    error("Factorial requires non-negative integers");
+                }
+                double result = 1;
+                for(int i = 2; i <= val; ++i) {
+                    result *= i;
+                }
+                return result;
+            }
+            else {
+                ts.put_back(next);
+                return val;
+            }
         }
-        return left;
-        break;
-
-      case 'q':
-        cerr<<":Programme Exitted:";
-        exit(0);
-      default:
-        error(":Expected a Primary:");
+        case '(': 
+        case '{': {
+            char closing = (t.kind == '(') ? ')' : '}';
+            double d = expression();
+            t = ts.get();
+            if(t.kind != closing) {
+                error(string("Expected '") + closing + "' not found");
+            }
+            return d;
+        }
+        case 'q':
+            exit(0);
+        default:
+            error("Primary expected (number or parenthesized expression)");
     }
-  }
 }
-
 int main(){
   cout<<R"(
                                          _.oo.
@@ -178,7 +195,7 @@ int main(){
            ,MMMMMMN888UU[[/;::-. o@^                 
            NNMMMNN888UU[[[/~.o@P^                      HERE'S WHAT YOU CAN DO :---
            888888888UU[[[/o@^-..
-          oI8888UU[[[/o@P^:--..                         (1) (+,-,/,*) These operations are used.
+          oI8888UU[[[/o@P^:--..                         (1) (+,-,/,*,!,(),{}) These operations are used.
        .@^  YUU[[[/o@^;::---..                          (2) press 'q' to quit.
      oMP     ^/o@P^;:::---..                            (3) after writing an expression press ENTER to get answer.
   .dMMM    .o@^ ^;::---...                              (4) Only normal parenthisis are supported ().
