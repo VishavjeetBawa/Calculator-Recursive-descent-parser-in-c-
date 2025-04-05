@@ -1,14 +1,18 @@
-//This is Advanced Calculator v 1.0.1
+//This is Advanced Calculator [v 1.2.2]
 //It will use parsing and grammar.
 
+#include <exception>
+#include <ios>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <cmath>
+#include <variant>
 using namespace std;
+static int call = 0;
 
 void error(string s){
   throw runtime_error(s);
-  cerr<<s;
 }
 
 class Token{
@@ -61,6 +65,7 @@ Token Token_Stream::get(){
     case '*':
     case '{':
     case '}':
+    case '%':
     case '/': 
     case '+':
     case '-':
@@ -103,6 +108,7 @@ Token_Stream ts;
 double expression(){
   double left = term();
   Token t = ts.get();
+
   while (true){
     switch(t.kind){
       case '+':
@@ -124,22 +130,39 @@ double expression(){
 double term(){
   double left = primary();
   Token t  = ts.get();
+
+  if (t.kind=='0'){          //1!3 (invalid)
+    error("Invalid Syntax");
+  }
+
   while(true){
     switch(t.kind){
-      case '*':
+      case '*':{
         left*=primary();
         t = ts.get();
         break;
+      }
 
-      case '/':
-        left/=primary();
+      case '/':{
+        double divisor = primary();
+        if (divisor == 0){
+          error("Divison By 0 error");
+        }
+        left/=divisor;
         t = ts.get();
         break;
+      }
+      case '%':{
+        int a = int(left);
+        left = a%int(primary());
+        t = ts.get();
+        break;
+      }
 
-      default:
+      default:{
         ts.put_back(t);
         return left;
-        break;
+      }
     }
 
   }
@@ -175,9 +198,29 @@ double primary() {
             double d = expression();
             t = ts.get();
             if(t.kind != closing) {
-                error(string("Expected '") + closing + "' not found");
+                error(string("Expected '") + closing + "' not found");//concatenation over a string.
             }
             return d;
+        }
+        case '-':{
+          double a;
+          try{
+            a = primary();
+          }
+          catch(exception){
+            error("Wrong Syntax");
+          }
+          return -a;
+        }
+        case '+':{
+          double b;
+          try{
+            b = primary();
+          }
+          catch(exception){
+            error("Wrong Syntax");
+          }
+          return b;
         }
         case 'q':
             exit(0);
@@ -186,12 +229,13 @@ double primary() {
     }
 }
 int main(){
+  if(call == 0){
   cout<<R"(
                                          _.oo.
                  _.u[[/;:,.         .odMMMMMM'
               .o888UU[[[/;:-.  .o@P^    MMM^
              oN88888UU[[[/;::-.        dP^          "WELCOME TO THE ADVANCED CALCULATOR"!!-------{No Erroor Handling yet}
-            dNMMNN888UU[[[/;:--.   .o@P^           ------------------------------[v 1.0.0]------------------------------------
+            dNMMNN888UU[[[/;:--.   .o@P^           ------------------------------[v 1.0.1]------------------------------------
            ,MMMMMMN888UU[[/;::-. o@^                 
            NNMMMNN888UU[[[/~.o@P^                      HERE'S WHAT YOU CAN DO :---
            888888888UU[[[/o@^-..
@@ -204,23 +248,34 @@ YMMMUP^
  ^^
 
   )"<<endl;
+    ++call;
+  }
+
   double val = 0;
-  int c= 2;
   bool prompt = true;
   while(cin){
-    if(prompt == true){
-      cout<<"> ";
+    try{  
+      if(prompt == true){
+        cout<<"> ";
+      }
+      Token t = ts.get();
+      if (t.kind == 'q') break;        // Press q to quit
+      if (t.kind=='\n'){              // Press ENTER to end expression
+        cout << "= " << val <<endl;   
+        prompt=true;
+        continue;
+      }else {
+        ts.put_back(t);
+      }
+      val = expression();
+      prompt = false;
     }
-    Token t = ts.get();
-    if (t.kind == 'q') break;        // Press q to quit
-    if (t.kind=='\n'){
-      cout << "= " << val <<endl;   // Press ENTER to end expression
-      prompt=true;
+
+    catch(exception& e){
+      cerr<<e.what()<<'\n';
+      cin.clear();
+      cin.ignore(numeric_limits<streamsize>::max() , '\n');
       continue;
-    }else {
-      ts.put_back(t);
     }
-    val = expression();
-    prompt = false;
   }
 }
