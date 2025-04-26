@@ -1,4 +1,4 @@
-//This is Advanced Calculator [v 1.2.2]
+//This is Advanced Calculator [v 2.0]
 //It will use parsing and grammar.
 
 #include <exception>
@@ -7,9 +7,7 @@
 #include <limits>
 #include <stdexcept>
 #include <cmath>
-#include <variant>
 using namespace std;
-static int call = 0;
 
 void error(string s){
   throw runtime_error(s);
@@ -26,6 +24,7 @@ class Token{
 
     
 };
+
 
 class Token_Stream{
   private:
@@ -90,6 +89,7 @@ Token Token_Stream::get(){
     default:
       error(":Invalid Token:");
   }
+  return 0;
 }
 
 
@@ -104,6 +104,7 @@ double term();
 double primary();
 
 Token_Stream ts;
+
 
 double expression(){
   double left = term();
@@ -227,9 +228,32 @@ double primary() {
         default:
             error("Primary expected (number or parenthesized expression)");
     }
+    return 0;
 }
+
+void Calculate(){
+  double val = 0;
+  bool prompt = true;
+
+  while(cin){
+    if(prompt == true){
+      cout<<"> ";
+    }
+    Token t = ts.get();
+    if (t.kind == 'q') break;        // Press q to quit
+    if (t.kind=='\n'){              // Press ENTER to end expression
+      cout << "= " << val <<endl;   
+      prompt=true;
+      continue;
+    }else {
+      ts.put_back(t);
+    }
+    val = expression();
+    prompt = false;
+  }
+}
+
 int main(){
-  if(call == 0){
   cout<<R"(
                                          _.oo.
                  _.u[[/;:,.         .odMMMMMM'
@@ -248,34 +272,15 @@ YMMMUP^
  ^^
 
   )"<<endl;
-    ++call;
+
+  try{
+    Calculate();
+  }
+  catch(exception& e){
+    cerr<<e.what()<<'\n';
+    cin.clear();
+    cin.ignore(numeric_limits<streamsize>::max() , '\n');
+    Calculate();
   }
 
-  double val = 0;
-  bool prompt = true;
-  while(cin){
-    try{  
-      if(prompt == true){
-        cout<<"> ";
-      }
-      Token t = ts.get();
-      if (t.kind == 'q') break;        // Press q to quit
-      if (t.kind=='\n'){              // Press ENTER to end expression
-        cout << "= " << val <<endl;   
-        prompt=true;
-        continue;
-      }else {
-        ts.put_back(t);
-      }
-      val = expression();
-      prompt = false;
-    }
-
-    catch(exception& e){
-      cerr<<e.what()<<'\n';
-      cin.clear();
-      cin.ignore(numeric_limits<streamsize>::max() , '\n');
-      continue;
-    }
-  }
 }
